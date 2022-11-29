@@ -5,7 +5,7 @@ import openpyxl
 from excelModule.excelConst import ORDER_ID_STRING, OPEN_TRADE_FILE, EXECUTED_TRADE_FILE, OPEN_TRADE_RULE_SHEET_NAME, \
     LAST_FILLED_ORDER_ADDRESS, REPEAT_RUN_SLEEP_TIME, COIN_LIST, MARKET_STRING, COIN_NAME_ADDRESS, \
     COIN_STATUS_ADDRESS, READY_STRING, OPEN_TRADE_COUNT_ADDRESS, COUNT_STRING, STATUS_COLUMN, TO_BUY_COLUMN, \
-    TO_SELL_COLUMN, QUANTITY_COLUMN, ID_BUY_COLUMN, ID_SELL_COLUMN, STATUS_STRING
+    TO_SELL_COLUMN, QUANTITY_COLUMN, ID_BUY_COLUMN, ID_SELL_COLUMN, STATUS_STRING, FORCE_CHECK_AFTER_LOOP
 from excelModule.excelErrorService import ExcelErrorService
 from excelModule.updateExcelService import UpdateExcelService
 from excelModule.excelBackupService import ExcelBackupService
@@ -75,7 +75,7 @@ class ExcelTradeService:
 
         while resume_check:
             self.checkOrderCount += 1
-            if self.checkOrderCount > 100:
+            if self.checkOrderCount > FORCE_CHECK_AFTER_LOOP:
                 self.forceRun = True
                 self.checkOrderCount = 0
             if self.forceRun or self.is_open_order_executed():
@@ -96,14 +96,15 @@ class ExcelTradeService:
             try:
                 self.openTradeSheet = self.openTradeWorkbook[self.coin_tradeCode]
 
+                response_order_count = self.coinService.get_active_order_count(self.coin_tradeCode)
+                count = response_order_count.get(COUNT_STRING)
                 if self.forceRun:
                     print("Force running for: " + self.coin_tradeCode)
+                    self.openTradeSheet[OPEN_TRADE_COUNT_ADDRESS].value = count
                     self.process_coin()
                 else:
                     if self.openTradeSheet[COIN_NAME_ADDRESS].value == self.coin_tradeCode \
                             and self.openTradeSheet[COIN_STATUS_ADDRESS].value == READY_STRING:
-                        response_order_count = self.coinService.get_active_order_count(self.coin_tradeCode)
-                        count = response_order_count.get(COUNT_STRING)
                         if count != self.openTradeSheet[OPEN_TRADE_COUNT_ADDRESS].value:
                             print("Running: " + self.coin_tradeCode + ". Trade count: " + str(count))
                             self.openTradeSheet[OPEN_TRADE_COUNT_ADDRESS].value = count

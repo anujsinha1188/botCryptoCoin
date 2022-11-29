@@ -7,6 +7,7 @@ with open(coinListFile, "r") as file:
 # Control constants
 FORCE_RUN = True
 REPEAT_RUN_SLEEP_TIME = 30
+FORCE_CHECK_AFTER_LOOP = 100
 
 ERROR_SLEEP_TIME = 60
 LAST_FILLED_ORDER_ADDRESS = "I2"
